@@ -98,6 +98,21 @@ Puppet::Type.type(:foreman_resource).provide(:rest_v3) do
   end
 
   def error_message(response)
-    JSON.parse(response.body)['error']['full_messages'].join(' ') rescue "unknown error (response #{response.code})"
+    messages = {
+      '400' => '400 Bad Request: Something is wrong with the data we sent to Foreman server',
+      '401' => '401 Unauthorized Request: Check credentials for validity',
+      '403' => '403 Forbidden: The credentials were valid but do not grant access to the requested resource',
+      '404' => '404 Not Found: The requested resource was not found',
+      '500' => '500 Internal Server Error: Check /var/log/foreman/production.log on Foreman server for detailed information',
+      '502' => '502 Bad Gateway: The webserver received an invalid response from the application server. Was Foreman unable to handle the request?',
+      '503' => '503 Service Unavailable: The webserver was unable to reach the backend service. Is foreman.service running?',
+      '504' => '504 Gateway Timeout: The webserver timed out waiting for a response from the application. Is Foreman under unusually heavy load?'
+    }
+
+    if messages.include?(response.code.to_str)
+      messages[response.code.to_str]
+    else
+      JSON.parse(response.body)['error']['full_messages'].join(' ') rescue "unknown error (response #{response.code})"
+    end
   end
 end

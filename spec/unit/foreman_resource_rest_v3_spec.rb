@@ -142,11 +142,43 @@ describe provider_class do
 
   describe '#error_message(response)' do
     it 'returns array of errors from JSON' do
-      expect(provider.error_message(double(:body => '{"error":{"full_messages":["error1","error2"]}}'))).to eq('error1 error2')
+      expect(provider.error_message(double(:body => '{"error":{"full_messages":["error1","error2"]}}', :code => 'dummycode'))).to eq('error1 error2')
     end
 
     it 'returns message for missing error messages' do
-      expect(provider.error_message(double(:body => '{}', :code => 404))).to eq('unknown error (response 404)')
+      expect(provider.error_message(double(:body => '{}', :code => '418'))).to eq('unknown error (response 418)')
+    end
+
+    it 'returns message for 400 response' do
+      expect(provider.error_message(double(:body => '{}', :code => '400'))).to eq('400 Bad Request: Something is wrong with the data we sent to Foreman server')
+    end
+
+    it 'returns message for 401 response' do
+      expect(provider.error_message(double(:body => '{}', :code => '401'))).to eq('401 Unauthorized Request: Check credentials for validity')
+    end
+
+    it 'returns message for 403 response' do
+      expect(provider.error_message(double(:body => '{}', :code => '403'))).to eq('403 Forbidden: The credentials were valid but do not grant access to the requested resource')
+    end
+
+    it 'returns message for 404 response' do
+      expect(provider.error_message(double(:body => '{}', :code => '404'))).to eq('404 Not Found: The requested resource was not found')
+    end
+
+    it 'returns message for 500 response' do
+      expect(provider.error_message(double(:body => '{}', :code => '500'))).to eq('500 Internal Server Error: Check /var/log/foreman/production.log on Foreman server for detailed information')
+    end
+
+    it 'returns message for 502 response' do
+      expect(provider.error_message(double(:body => '{}', :code => '502'))).to eq('502 Bad Gateway: The webserver received an invalid response from the application server. Was Foreman unable to handle the request?')
+    end
+
+    it 'returns message for 503 response' do
+      expect(provider.error_message(double(:body => '{}', :code => '503'))).to eq('503 Service Unavailable: The webserver was unable to reach the backend service. Is foreman.service running?')
+    end
+
+    it 'returns message for 504 response' do
+      expect(provider.error_message(double(:body => '{}', :code => '504'))).to eq('504 Gateway Timeout: The webserver timed out waiting for a response from the application. Is Foreman under unusually heavy load?')
     end
   end
 end
